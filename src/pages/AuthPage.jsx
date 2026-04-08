@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login, register } from '../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
@@ -128,14 +128,23 @@ const AuthPage = () => {
                         </button>
                     </div>
 
-                    <div className="text-center">
-                        <button
-                            type="button"
-                            onClick={() => setIsLogin(!isLogin)}
-                            className="text-primary hover:text-orange-600"
-                        >
-                            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-                        </button>
+                    <div className="flex items-center justify-between mt-4">
+                        <div className="text-sm">
+                            {isLogin && (
+                                <Link to="/forgot-password" className="font-medium text-primary hover:text-orange-500">
+                                    Forgot your password?
+                                </Link>
+                            )}
+                        </div>
+                        <div className="text-sm">
+                            <button
+                                type="button"
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="font-medium text-gray-600 hover:text-gray-900"
+                            >
+                                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

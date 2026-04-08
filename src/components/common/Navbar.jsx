@@ -66,7 +66,6 @@ const Navbar = () => {
                                     </Link>
                                 )}
 
-                                {/* Dropdown Menu - SỬA LẠI PHẦN NÀY */}
                                 <div className="relative" ref={dropdownRef}>
                                     <button
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}

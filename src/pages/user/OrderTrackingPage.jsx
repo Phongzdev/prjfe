@@ -5,6 +5,7 @@ import api from '../../services/api';
 import { getSocket } from '../../services/socket';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ReviewModal from '../../components/user/ReviewModal';
 
 const OrderTrackingPage = () => {
     const { orderId } = useParams();
@@ -12,6 +13,8 @@ const OrderTrackingPage = () => {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState([]);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [hasReviewed, setHasReviewed] = useState(false);
 
     const statusSteps = [
         { key: 'pending', label: 'Order Placed', icon: '📝', description: 'Your order has been received' },
@@ -27,6 +30,12 @@ const OrderTrackingPage = () => {
         setupSocket();
     }, [orderId]);
 
+    useEffect(() => {
+        if (order?.status === 'delivered') {
+            checkIfReviewed();
+        }
+    }, [order]);
+
     const fetchOrder = async () => {
         try {
             const response = await api.get(`/orders/${orderId}/track`);
@@ -36,6 +45,16 @@ const OrderTrackingPage = () => {
             toast.error('Failed to load order details');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkIfReviewed = async () => {
+        try {
+            const response = await api.get('/reviews/my-reviews');
+            const reviewed = response.data.reviews.some(r => r.order_id === parseInt(orderId));
+            setHasReviewed(reviewed);
+        } catch (error) {
+            console.error('Check review error:', error);
         }
     };
 
@@ -80,6 +99,11 @@ const OrderTrackingPage = () => {
         if (stepIndex < currentIndex) return 'bg-green-600';
         if (stepIndex === currentIndex) return 'bg-primary animate-pulse';
         return 'bg-gray-300';
+    };
+
+    const handleReviewSuccess = () => {
+        setHasReviewed(true);
+        toast.success('Thank you for your review!');
     };
 
     if (loading) return <LoadingSpinner />;
@@ -149,7 +173,7 @@ const OrderTrackingPage = () => {
                     </div>
 
                     {/* Current Status Description */}
-                    <div className="mt-8 p-4 bg-primary-50 rounded-lg">
+                    <div className="mt-8 p-4 bg-orange-50 rounded-lg">
                         <p className="text-primary font-medium">
                             {statusSteps[currentStep]?.description}
                         </p>
@@ -177,7 +201,10 @@ const OrderTrackingPage = () => {
                         <p className="text-sm text-gray-600">Delivery Address:</p>
                         <p className="font-medium">{order.delivery_address}</p>
                         <p className="text-sm text-gray-600 mt-2">Payment Method:</p>
-                        <p className="font-medium capitalize">{order.payment_method === 'cash' ? 'Cash on Delivery' : 'Credit Card'}</p>
+                        <p className="font-medium capitalize">
+                            {order.payment_method === 'cash' ? 'Cash on Delivery' :
+                                order.payment_method === 'momo' ? 'MoMo Wallet' : 'Credit Card'}
+                        </p>
                     </div>
                 </div>
 
@@ -215,7 +242,7 @@ const OrderTrackingPage = () => {
                 </div>
 
                 {/* Real-time Notifications */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 className="font-semibold mb-4">Live Updates</h3>
                     {notifications.length === 0 ? (
                         <p className="text-gray-500 text-sm">Waiting for updates...</p>
@@ -234,32 +261,57 @@ const OrderTrackingPage = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-6 flex justify-between">
+                <div className="mt-6 flex justify-between items-center flex-wrap gap-4">
                     <Link
                         to="/restaurants"
                         className="text-primary hover:text-orange-600"
                     >
                         ← Back to Restaurants
                     </Link>
-                    {order.status !== 'delivered' && order.status !== 'cancelled' && (
-                        <button
-                            onClick={async () => {
-                                if (window.confirm('Are you sure you want to cancel this order?')) {
-                                    try {
-                                        await api.put(`/orders/${order.id}/cancel`);
-                                        toast.success('Order cancelled');
-                                        fetchOrder();
-                                    } catch (error) {
-                                        toast.error('Failed to cancel order');
+
+                    <div className="flex gap-4">
+                        {/* Review Button - Chỉ hiển thị khi đã giao hàng và chưa review */}
+                        {order.status === 'delivered' && !hasReviewed && (
+                            <button
+                                onClick={() => setShowReviewModal(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                            >
+                                <span>⭐</span>
+                                Write a Review
+                            </button>
+                        )}
+
+                        {/* Cancel Button */}
+                        {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm('Are you sure you want to cancel this order?')) {
+                                        try {
+                                            await api.put(`/orders/${order.id}/cancel`);
+                                            toast.success('Order cancelled');
+                                            fetchOrder();
+                                        } catch (error) {
+                                            toast.error('Failed to cancel order');
+                                        }
                                     }
-                                }
-                            }}
-                            className="text-red-500 hover:text-red-700"
-                        >
-                            Cancel Order
-                        </button>
-                    )}
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                            >
+                                Cancel Order
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {/* Review Modal */}
+                {showReviewModal && order && (
+                    <ReviewModal
+                        order={order}
+                        isOpen={showReviewModal}
+                        onClose={() => setShowReviewModal(false)}
+                        onSuccess={handleReviewSuccess}
+                    />
+                )}
             </div>
         </div>
     );
