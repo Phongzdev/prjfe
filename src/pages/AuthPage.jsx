@@ -34,7 +34,10 @@ const AuthPage = () => {
 
         if (result.payload?.success) {
             toast.success(isLogin ? 'Login successful!' : 'Registration successful!');
-            navigate(result.payload.user.role === 'vendor' ? '/vendor/dashboard' : '/restaurants');
+            const targetRole = result.payload.user.role;
+            if (targetRole === 'admin') navigate('/admin/dashboard');
+            else if (targetRole === 'vendor') navigate('/vendor/dashboard');
+            else navigate('/restaurants');
         } else {
             toast.error(result.payload?.message || 'Something went wrong');
         }

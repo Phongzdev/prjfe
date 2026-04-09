@@ -24,9 +24,25 @@ import VendorOrders from './pages/vendor/VendorOrders';
 import VendorMenu from './pages/vendor/VendorMenu';
 import VendorProfile from './pages/vendor/VendorProfile';
 
+// Admin Pages - To be created
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminRestaurants from './pages/admin/AdminRestaurants';
+import AdminMenuItems from './pages/admin/AdminMenuItems';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminPayments from './pages/admin/AdminPayments';
+import AdminVouchers from './pages/admin/AdminVouchers';
+
 // Layouts
 import UserLayout from './layouts/UserLayout';
 import VendorLayout from './layouts/VendorLayout';
+import AdminLayout from './layouts/AdminLayout';
+
+const getDashboardPath = (role) => {
+  if (role === 'admin') return '/admin/dashboard';
+  if (role === 'vendor') return '/vendor/dashboard';
+  return '/';
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children, role }) => {
@@ -37,7 +53,7 @@ const ProtectedRoute = ({ children, role }) => {
   }
 
   if (role && user?.role !== role) {
-    return <Navigate to={user?.role === 'vendor' ? '/vendor/dashboard' : '/'} />;
+    return <Navigate to={getDashboardPath(user?.role)} />;
   }
 
   return children;
@@ -48,7 +64,7 @@ const AuthRoute = ({ children }) => {
   const { user, token } = useSelector((state) => state.auth);
 
   if (token) {
-    return <Navigate to={user?.role === 'vendor' ? '/vendor/dashboard' : '/'} />;
+    return <Navigate to={getDashboardPath(user?.role)} />;
   }
 
   return children;
@@ -145,6 +161,45 @@ function App() {
           <Route path="/vendor/profile" element={
             <ProtectedRoute role="vendor">
               <VendorProfile />
+            </ProtectedRoute>
+          } />
+        </Route>
+
+        {/* Admin Layout encompasses all admin pages */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute role="admin">
+              <AdminUsers />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/restaurants" element={
+            <ProtectedRoute role="admin">
+              <AdminRestaurants />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/menu-items" element={
+            <ProtectedRoute role="admin">
+              <AdminMenuItems />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/orders" element={
+            <ProtectedRoute role="admin">
+              <AdminOrders />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/payments" element={
+            <ProtectedRoute role="admin">
+              <AdminPayments />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/vouchers" element={
+            <ProtectedRoute role="admin">
+              <AdminVouchers />
             </ProtectedRoute>
           } />
         </Route>
